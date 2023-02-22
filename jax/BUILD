@@ -181,6 +181,7 @@ py_library_providing_imports_info(
         ":partial_eval",
         ":partition_spec",
         ":path",
+        ":pickle_util",
         ":pretty_printer",
         ":profiler",
         ":sharding",
@@ -439,6 +440,12 @@ pytype_strict_library(
     name = "path",
     srcs = ["_src/path.py"],
     deps = py_deps("epath"),
+)
+
+pytype_strict_library(
+    name = "pickle_util",
+    srcs = ["_src/pickle_util.py"],
+    deps = [":profiler"] + py_deps("cloudpickle"),
 )
 
 pytype_strict_library(
