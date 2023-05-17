@@ -14,6 +14,8 @@
 
 # Shared CUDA/ROCM GPU kernels.
 
+load("//tools/build_defs/proto/cpp:cc_proto_library.bzl", "cc_proto_library")
+
 licenses(["notice"])
 
 package(
@@ -48,3 +50,19 @@ exports_files(srcs = [
     "triton.cc",
     "vendor.h",
 ])
+
+proto_library(
+    name = "triton_proto",
+    srcs = ["triton.proto"],
+)
+
+py_proto_library(
+    name = "triton_py_pb2",
+    api_version = 2,
+    deps = [":triton_proto"],
+)
+
+cc_proto_library(
+    name = "triton_cc_proto",
+    deps = [":triton_proto"],
+)

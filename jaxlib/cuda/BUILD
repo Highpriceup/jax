@@ -393,7 +393,9 @@ pybind_extension(
     deps = [
         ":cuda_gpu_kernel_helpers",
         ":cuda_vendor",
+        "//jaxlib/gpu:triton_cc_proto",
         "@xla//xla/service:custom_call_status",
+        "@xla//xla/stream_executor/gpu:asm_compiler",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
@@ -404,6 +406,7 @@ pybind_extension(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
+        "@local_config_cuda//cuda:cuda_headers",
         "@pybind11",
         "@pybind11_abseil//pybind11_abseil:status_casters",
     ],

@@ -53,6 +53,7 @@ py_library_providing_imports_info(
         ":utils",
         "//jaxlib/cpu:_ducc_fft",
         "//jaxlib/cpu:_lapack",
+        "//jaxlib/gpu:triton_py_pb2",
         "//jaxlib/mlir",
         "//jaxlib/mlir:builtin_dialect",
         "//jaxlib/mlir:chlo_dialect",
