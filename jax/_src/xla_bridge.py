@@ -37,6 +37,7 @@ from jax._src import lib
 from jax._src import distributed
 from jax._src.config import flags, bool_env, config, int_env
 from jax._src.lib import xla_client
+from jax._src.lib import xla_extension_version
 from jax._src import traceback_util
 from jax._src import util
 
@@ -234,11 +235,22 @@ def make_gpu_client(
   allowed_devices = None
   if visible_devices != "all":
     allowed_devices = {int(x) for x in visible_devices.split(",")}
-  return xla_client.make_gpu_client(
-    distributed_client=distributed.global_state.client,
-    node_id=distributed.global_state.process_id,
-    platform_name=platform_name,
-    allowed_devices=allowed_devices)
+
+  if xla_extension_version < 159:
+    return xla_client.make_gpu_client(
+        distributed_client=distributed.global_state.client,
+        node_id=distributed.global_state.process_id,
+        platform_name=platform_name,
+        allowed_devices=allowed_devices,
+    )
+  else:
+    return xla_client.make_gpu_client(
+        distributed_client=distributed.global_state.client,
+        node_id=distributed.global_state.process_id,
+        num_nodes=distributed.global_state.num_processes,
+        platform_name=platform_name,
+        allowed_devices=allowed_devices,
+    )  # type: ignore
 
 
 if hasattr(xla_client, "make_gpu_client"):
@@ -413,7 +425,28 @@ def register_plugin(
             ' plugin.'
         )
       xla_client.load_pjrt_plugin_dynamically(plugin_name, library_path)
-    return xla_client.make_c_api_client(plugin_name, options)
+
+    if xla_extension_version < 160:
+      return xla_client.make_c_api_client(plugin_name, options)
+    else:
+      if distributed.global_state.client is not None:
+        distribute_option = {
+            'node_id': distributed.global_state.process_id,
+            'num_nodes': distributed.global_state.num_processes,
+        }
+        # Move allowed_devices to plugin module initialize method
+        visible_devices = getattr(FLAGS, 'jax_cuda_visible_devices', 'all')
+        if visible_devices != 'all':
+          distribute_option['allowed_devices'] = {
+              int(x) for x in visible_devices.split(',')
+          }
+        if options is not None:
+          distribute_option.update(options)
+        return xla_client.make_c_api_client(
+            plugin_name, distribute_option, distributed.global_state.client
+        )
+      else:
+        return xla_client.make_c_api_client(plugin_name, options, None)
 
   logger.debug(
       'registering PJRT plugin %s from %s', plugin_name, library_path
