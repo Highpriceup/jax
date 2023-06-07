@@ -1808,6 +1808,18 @@ class Jax2tfWithCustomPRNGTest(tf_test_util.JaxToTfTestCase):
     jax_result = func()
     self.assertEqual(tf_result, jax_result)
 
+  def test_scipy_signal_correlate(self):
+    f_jax = lambda a, b: jax.scipy.signal.correlate(a, b, mode='valid', method='fft')
+    a = jnp.ones((276,276), dtype=jnp.float32)
+    b = jnp.ones((256,256), dtype=jnp.float32)
+
+    jax_result = jax.jit(f_jax)(a, b)
+    logging.info("jax res shape: %s", jax_result.shape)
+
+    f_tf = jax2tf.convert(f_jax)
+    tf_result = f_tf(a, b)
+    logging.info("tf res shape: %s", tf_result.shape)
+    self.assertAllClose(tf_result, jax_result, atol=1e-2, rtol=1e-2)
 
 if __name__ == "__main__":
   # TODO: Remove once tensorflow is 2.10.0 everywhere.
